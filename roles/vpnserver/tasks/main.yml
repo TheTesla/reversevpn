@@ -12,6 +12,15 @@
     - wireguard
     - wireguard-tools
     - wireguard-dkms
+    - gawk
+
+- name: Retrieve external interface
+  shell: "ip route get 8.8.8.8 | awk '{ print $5; exit }'"
+  register: extifacestdout
+
+- name: Extract interface name
+  set_fact:
+    extiface: "{{ extifacestdout.stdout }}"
 
 - name: Set server private key 
   ini_file:
@@ -35,6 +44,22 @@
     section: Interface
     option: ListenPort
     value: "{{ serverport }}"
+    mode: 0600
+
+- name: Set nat rule add command
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface
+    option: PostUp
+    value: "iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ extiface }} -j MASQUERADE"
+    mode: 0600
+
+- name: Set nat rule delete command
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface
+    option: PostDown 
+    value: "iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ extiface }} -j MASQUERADE"
     mode: 0600
 
 - name: Set client public key
