@@ -1,0 +1,12 @@
+---
+
+clientaddress: 192.168.2.2
+serveraddress: 192.168.2.1
+allowedipsfromserver: 192.168.2.2
+allowedipsfromclient: 0.0.0.0/0
+serverpubaddr: testserver.smartrns.net
+serverport: 51280
+
+
+
+

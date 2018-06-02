@@ -1,0 +1,4 @@
+vars/keys.yml
+*.retry
+*.logs
+.vagrant

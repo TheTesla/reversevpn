@@ -1,0 +1,18 @@
+---
+
+- hosts: vpnserver
+  user: root
+  vars_files:
+    - vars/keys.yml
+    - vars/config.yml
+  roles:
+    - vpnserver
+
+- hosts: all
+  user: vagrant
+  vars_files:
+    - vars/keys.yml
+    - vars/config.yml
+  roles:
+    - vpnclient
+

@@ -1,0 +1,71 @@
+---
+
+- name: Add wireguard repo
+  apt_repository:
+    repo: ppa:wireguard/wireguard  
+  become: True
+  become_method: sudo
+
+- name: Install wireguard
+  apt:
+    name: "{{ item }}"
+    update_cache: True
+  with_items:
+    - wireguard
+    - wireguard-tools
+    - wireguard-dkms
+  become: True
+  become_method: sudo
+
+- name: Set client private key 
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface 
+    option: PrivateKey
+    value: "{{ clientprivkey }}"
+    mode: 0600
+  become: True
+  become_method: sudo
+
+- name: Set client address
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface 
+    option: Address
+    value: "{{ clientaddress }}"
+    mode: 0600
+  become: True
+  become_method: sudo
+
+- name: Set server to connect to
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Peer 
+    option: Endpoint
+    value: "{{ serverpubaddr }}:{{ serverport }}"
+    mode: 0600
+  become: True
+  become_method: sudo
+
+- name: Set server public key
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Peer 
+    option: PublicKey
+    value: "{{ serverpubkey }}"
+    mode: 0600
+  become: True
+  become_method: sudo
+
+- name: Set allowed ips
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Peer 
+    option: AllowedIPs
+    value: "{{ allowedipsfromclient }}"
+    mode: 0600
+  become: True
+  become_method: sudo
+
+
+

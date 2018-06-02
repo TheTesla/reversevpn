@@ -1,0 +1,63 @@
+---
+
+- name: Add wireguard repo
+  apt_repository:
+    repo: ppa:wireguard/wireguard  
+
+- name: Install wireguard
+  apt:
+    name: "{{ item }}"
+    update_cache: True
+  with_items:
+    - wireguard
+    - wireguard-tools
+    - wireguard-dkms
+
+- name: Set server private key 
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface 
+    option: PrivateKey
+    value: "{{ serverprivkey }}"
+    mode: 0600
+
+- name: Set server address
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface 
+    option: Address
+    value: "{{ serveraddress }}"
+    mode: 0600
+
+- name: Set server external port
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Interface
+    option: ListenPort
+    value: "{{ serverport }}"
+    mode: 0600
+
+- name: Set client public key
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Peer 
+    option: PublicKey
+    value: "{{ clientpubkey }}"
+    mode: 0600
+
+- name: Set allowed ips 
+  ini_file:
+    path: /etc/wireguard/wg0.conf
+    section: Peer 
+    option: AllowedIPs
+    value: "{{ allowedipsfromserver }}"
+    mode: 0600
+
+- name: Enable forwarding 
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    reload: True
+
+
