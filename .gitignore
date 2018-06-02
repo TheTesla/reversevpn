@@ -1,4 +1,4 @@
 vars/keys.yml
 *.retry
-*.logs
+*.log
 .vagrant
