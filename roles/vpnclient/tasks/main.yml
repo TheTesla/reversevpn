@@ -17,9 +17,15 @@
   become: True
   become_method: sudo
 
+- name: Disconnect vpn
+  shell: "wg-quick down {{ vpniface }}"
+  ignore_errors: True
+  become: True
+  become_method: sudo
+
 - name: Set client private key 
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface 
     option: PrivateKey
     value: "{{ clientprivkey }}"
@@ -29,7 +35,7 @@
 
 - name: Set client address
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface 
     option: Address
     value: "{{ clientaddress }}"
@@ -39,7 +45,7 @@
 
 - name: Set server to connect to
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Peer 
     option: Endpoint
     value: "{{ serverpubaddr }}:{{ serverport }}"
@@ -49,7 +55,7 @@
 
 - name: Set server public key
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Peer 
     option: PublicKey
     value: "{{ serverpubkey }}"
@@ -59,11 +65,17 @@
 
 - name: Set allowed ips
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Peer 
     option: AllowedIPs
     value: "{{ allowedipsfromclient }}"
     mode: 0600
+  become: True
+  become_method: sudo
+
+- name: Connect vpn
+  shell: "wg-quick up {{ vpniface }}"
+  ignore_errors: True
   become: True
   become_method: sudo
 

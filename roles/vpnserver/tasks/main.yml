@@ -18,13 +18,17 @@
   shell: "ip route get 8.8.8.8 | awk '{ print $5; exit }'"
   register: extifacestdout
 
+- name: Disconnect vpn
+  shell: "wg-quick down {{ vpniface }}"
+  ignore_errors: True
+
 - name: Extract interface name
   set_fact:
     extiface: "{{ extifacestdout.stdout }}"
 
 - name: Set server private key 
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface 
     option: PrivateKey
     value: "{{ serverprivkey }}"
@@ -32,7 +36,7 @@
 
 - name: Set server address
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface 
     option: Address
     value: "{{ serveraddress }}"
@@ -40,7 +44,7 @@
 
 - name: Set server external port
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface
     option: ListenPort
     value: "{{ serverport }}"
@@ -48,23 +52,23 @@
 
 - name: Set nat rule add command
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface
     option: PostUp
-    value: "iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ extiface }} -j MASQUERADE"
+    value: "iptables -A FORWARD -i {{ vpniface }} -j ACCEPT; iptables -t nat -A POSTROUTING -o {{ extiface }} -j MASQUERADE; iptables -t nat -A PREROUTING -i ens3 -p tcp --dport {{ extports }} -j DNAT --to {{ clientaddress }}:{{ intports }}"
     mode: 0600
 
 - name: Set nat rule delete command
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Interface
     option: PostDown 
-    value: "iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ extiface }} -j MASQUERADE"
+    value: "iptables -D FORWARD -i {{ vpniface }} -j ACCEPT; iptables -t nat -D POSTROUTING -o {{ extiface }} -j MASQUERADE; iptables -t nat -D PREROUTING -i ens3 -p tcp --dport {{ extports }} -j DNAT --to {{ clientaddress }}:{{ intports }}"
     mode: 0600
 
 - name: Set client public key
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Peer 
     option: PublicKey
     value: "{{ clientpubkey }}"
@@ -72,7 +76,7 @@
 
 - name: Set allowed ips 
   ini_file:
-    path: /etc/wireguard/wg0.conf
+    path: "/etc/wireguard/{{ vpniface }}.conf"
     section: Peer 
     option: AllowedIPs
     value: "{{ allowedipsfromserver }}"
@@ -85,4 +89,7 @@
     state: present
     reload: True
 
+- name: Connect vpn
+  shell: "wg-quick up {{ vpniface }}"
+  ignore_errors: True
 
